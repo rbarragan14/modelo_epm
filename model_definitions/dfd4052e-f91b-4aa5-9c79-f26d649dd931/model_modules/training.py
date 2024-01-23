@@ -57,7 +57,7 @@ def train(context: ModelContext, **kwargs):
     #    remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
     #except:
     #    pass
-    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", is_binary=False)
+    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"VIVO_AltoValorSTO.py", is_binary=False)
 
     # Install pickled model
     #try:
