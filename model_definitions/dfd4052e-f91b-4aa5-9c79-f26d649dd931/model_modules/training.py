@@ -19,18 +19,18 @@ import pickle
 import joblib
 
 def train(context: ModelContext, **kwargs):
-    aoa_create_context()
+    #aoa_create_context()
 
-    feature_names = context.dataset_info.feature_names
-    target_name = context.dataset_info.target_names[0]
+    #feature_names = context.dataset_info.feature_names
+    #target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
-    train_df = DataFrame.from_query(context.dataset_info.sql)
-    train_pdf = train_df.to_pandas(all_rows=True)
+    #train_df = DataFrame.from_query(context.dataset_info.sql)
+    #train_pdf = train_df.to_pandas(all_rows=True)
 
     # split data into X and y
-    X_train = train_pdf[feature_names]
-    y_train = train_pdf[target_name]
+    #X_train = train_pdf[feature_names]
+    #y_train = train_pdf[target_name]
 
     print("Starting training...")
 
@@ -73,11 +73,11 @@ def train(context: ModelContext, **kwargs):
 
     print("Recording training stats")
 
-    record_training_stats(train_df,
-                          features=feature_names,
-                          targets=[target_name],
-                          categorical=[target_name],
-                          feature_importance=feature_importance,
-                          context=context)
+    #record_training_stats(train_df,
+    #                      features=feature_names,
+    #                      targets=[target_name],
+    #                      categorical=[target_name],
+    #                      feature_importance=feature_importance,
+    #                      context=context)
     
     print("All done!")
