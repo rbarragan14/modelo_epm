@@ -16,7 +16,7 @@ import dill
 import base64
 import pickle
 
-
+import joblib
 
 def train(context: ModelContext, **kwargs):
     aoa_create_context()
@@ -34,24 +34,24 @@ def train(context: ModelContext, **kwargs):
 
     print("Starting training...")
 
-    from teradataml.dbutils.filemgr import install_file,remove_file
-    from teradataml.analytics.utils import display_analytic_functions
+    #from teradataml.dbutils.filemgr import install_file,remove_file
+    #from teradataml.analytics.utils import display_analytic_functions
 
         # Install STO Python script
-    try:
-        remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
-    except:
-        pass
-    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
-                is_binary=False)
+    #try:
+    #    remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
+    #except:
+    #    pass
+    #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
+    #            is_binary=False)
 
     # Install pickled model
-    try:
-        remove_file (file_identifier='model_gbc_alt_valor', force_remove=True)
-    except:
-        pass
-    install_file(file_identifier='model_gbc_alt_valor', file_path=f"./model_gbc_alt_valor.pickle", 
-                is_binary=True)
+    #try:
+    #    remove_file (file_identifier='model_gbc_alt_valor', force_remove=True)
+    #except:
+    #    pass
+    #install_file(file_identifier='model_gbc_alt_valor', file_path=f"./model_gbc_alt_valor.pickle", 
+    #            is_binary=True)
 
     print("Finished training")
 
@@ -69,7 +69,7 @@ def train(context: ModelContext, **kwargs):
     #plot_importance(model["xgb"].get_booster(), max_num_features=10)
     #save_plot("feature_importance.png", context=context)
 
-    feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
+    #feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
 
     print("Recording training stats")
 
