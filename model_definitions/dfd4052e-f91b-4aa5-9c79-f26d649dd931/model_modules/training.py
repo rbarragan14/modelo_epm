@@ -15,6 +15,12 @@ from teradataml import valib
 from sqlalchemy import func, case, distinct, cast
 from teradataml.dbutils.filemgr import install_file,remove_file
 
+from teradataml import (
+    DataFrame,
+    GLM,
+    ScaleFit,
+    ScaleTransform
+)
 from aoa import (
     record_training_stats,
     save_plot,
