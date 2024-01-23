@@ -34,7 +34,7 @@ import pickle
 import joblib
 
 def train(context: ModelContext, **kwargs):
-    #aoa_create_context()
+    aoa_create_context()
 
     #feature_names = context.dataset_info.feature_names
     #target_name = context.dataset_info.target_names[0]
