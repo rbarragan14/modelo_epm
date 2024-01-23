@@ -1,6 +1,5 @@
 from teradataml import DataFrame, create_context
 from teradatasqlalchemy.types import INTEGER, VARCHAR, CLOB
-from sklearn.ensemble import RandomForestRegressor
 from aoa import (
     record_training_stats,
     save_plot,
