@@ -57,7 +57,7 @@ def train(context: ModelContext, **kwargs):
     #    remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
     #except:
     #    pass
-    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"VIVO_AltoValorSTO.py", is_binary=False)
+    #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"VIVO_AltoValorSTO.py", is_binary=False)
 
     # Install pickled model
     #try:
@@ -66,6 +66,16 @@ def train(context: ModelContext, **kwargs):
     #    pass
     #install_file(file_identifier='model_gbc_alt_valor', file_path=f"./model_gbc_alt_valor.pickle", 
     #            is_binary=True)
+
+    df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
+                          "a.* FROM vivoaltovalor a")
+    sto = teradataml.Script(data=df,
+                        script_name='VIVO_AltoValorSTO.py',
+                        script_command=f'tdpython3 ./demo_user/VIVO_AltoValorSTO.py',
+                        data_order_column="Id",
+                        is_local_order=True,
+                        delimiter='\t',
+                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
 
     print("Finished training")
 
