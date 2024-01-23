@@ -1,5 +1,20 @@
 from teradataml import DataFrame, create_context
-from teradatasqlalchemy.types import INTEGER, VARCHAR, CLOB
+# managing connections
+import teradataml
+from teradataml import create_context, get_context, remove_context, execute_sql
+from collections import OrderedDict
+
+# managing teradataml dataframes
+from teradataml.dataframe.dataframe import DataFrame, in_schema
+from teradataml.dataframe.copy_to import copy_to_sql
+from teradataml import configure
+from teradataml import UtilFuncs
+from teradataml import save_byom, list_byom, retrieve_byom, PMMLPredict
+from teradatasqlalchemy import VARCHAR, TIMESTAMP, INTEGER, FLOAT
+from teradataml import valib
+from sqlalchemy import func, case, distinct, cast
+from teradataml.dbutils.filemgr import install_file,remove_file
+
 from aoa import (
     record_training_stats,
     save_plot,
@@ -42,8 +57,7 @@ def train(context: ModelContext, **kwargs):
     #    remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
     #except:
     #    pass
-    #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
-    #            is_binary=False)
+    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", is_binary=False)
 
     # Install pickled model
     #try:
