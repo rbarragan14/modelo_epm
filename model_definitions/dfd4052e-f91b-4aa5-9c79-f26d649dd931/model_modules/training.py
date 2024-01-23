@@ -1,98 +1,85 @@
 from teradataml import DataFrame, create_context
 from teradatasqlalchemy.types import INTEGER, VARCHAR, CLOB
-from sklearn.preprocessing import RobustScaler, OneHotEncoder
-from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from aoa.sto.util import save_metadata, cleanup_cli, check_sto_version, collect_sto_versions
+from aoa import (
+    record_training_stats,
+    save_plot,
+    aoa_create_context,
+    ModelContext
+)
 from collections import OrderedDict
 
-import os
+import sys,os
 import numpy as np
 import json
 import base64
 import dill
+import base64
+import pickle
+
+import joblib
 
 
-def train(data_conf, model_conf, **kwargs):
-    model_version = kwargs["model_version"]
-    hyperparams = model_conf["hyperParameters"]
-    model_table = "aoa_sto_models"
+def train(context: ModelContext, **kwargs):
+    aoa_create_context()
 
-    create_context(host=os.environ["AOA_CONN_HOST"],
-                   username=os.environ["AOA_CONN_USERNAME"],
-                   password=os.environ["AOA_CONN_PASSWORD"],
-                   database=data_conf["schema"] if "schema" in data_conf and data_conf["schema"] != "" else None)
+    feature_names = context.dataset_info.feature_names
+    target_name = context.dataset_info.target_names[0]
 
-    check_sto_version()
-    cleanup_cli(model_version, model_table)
+    # read training dataset from Teradata and convert to pandas
+    train_df = DataFrame.from_query(context.dataset_info.sql)
+    train_pdf = train_df.to_pandas(all_rows=True)
 
-    def train_partition(partition, model_version, hyperparams):
-        rows = partition.read()
-        if rows is None:
-            return None
-
-        numeric_features = ["X"+str(i) for i in range(1,10)]
-        for i in numeric_features:
-            rows[i] = rows[i].astype("float")
-
-        numeric_transformer = Pipeline(steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", RobustScaler()),
-            ("pca", PCA(0.95))
-        ])
-
-        categorical_features = ["flag"]
-        for i in categorical_features:
-            rows[i] = rows[i].astype("category")
-
-        categorical_transformer = Pipeline(steps=[
-            ("imputer", SimpleImputer(strategy="constant", fill_value=0)),
-            ("onehot", OneHotEncoder(handle_unknown="ignore"))])
-
-        preprocessor = ColumnTransformer(transformers=[
-                ("num", numeric_transformer, numeric_features),
-                ("cat", categorical_transformer, categorical_features)])
-
-        features = numeric_features + categorical_features
-        pipeline = Pipeline([("preprocessor", preprocessor),
-                             ("rf", RandomForestRegressor(max_depth=hyperparams["max_depth"]))])
-        pipeline.fit(rows[features], rows[['Y1']])
-        pipeline.features = features
-
-        partition_id = rows.partition_ID.iloc[0]
-        artefact = base64.b64encode(dill.dumps(pipeline))
-
-        # record whatever partition level information you want like rows, data stats, explainability, etc
-        partition_metadata = json.dumps({
-            "num_rows": rows.shape[0],
-            "hyper_parameters": hyperparams
-        })
-
-        return np.array([[partition_id, model_version, rows.shape[0], partition_metadata, artefact]])
+    # split data into X and y
+    X_train = train_pdf[feature_names]
+    y_train = train_pdf[target_name]
 
     print("Starting training...")
 
-    query = "SELECT * FROM {table} WHERE fold_ID='train'".format(table=data_conf["table"])
-    df = DataFrame(query=query)
-    model_df = df.map_partition(lambda partition: train_partition(partition, model_version, hyperparams),
-                                data_partition_column="partition_ID",
-                                returns=OrderedDict(
-                                    [('partition_id', VARCHAR(255)),
-                                     ('model_version', VARCHAR(255)),
-                                     ('num_rows', INTEGER()),
-                                     ('partition_metadata', CLOB()),
-                                     ('model_artefact', CLOB())]))
+    from teradataml.dbutils.filemgr import install_file,remove_file
+    from teradataml.analytics.utils import display_analytic_functions
 
-    # persist to models table
-    model_df.to_sql(model_table, if_exists="append")
-    model_df = DataFrame(query=f"SELECT * FROM {model_table} WHERE model_version='{model_version}'")
+        # Install STO Python script
+    try:
+        remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
+    except:
+        pass
+    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
+                is_binary=False)
 
-    save_metadata(model_df)
+    # Install pickled model
+    try:
+        remove_file (file_identifier='model_gbc_alt_valor', force_remove=True)
+    except:
+        pass
+    install_file(file_identifier='model_gbc_alt_valor', file_path=f"./model_gbc_alt_valor.pickle", 
+                is_binary=True)
 
     print("Finished training")
 
-    with open("artifacts/output/sto_versions.json", "w+") as f:
-        json.dump(collect_sto_versions(), f)
+    # export model artefacts
+    #joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
+
+    # we can also save as pmml so it can be used for In-Vantage scoring etc.
+    #xgboost_to_pmml(pipeline=model, col_names=feature_names, target_name=target_name,
+    #                pmml_f_name=f"{context.artifact_output_path}/model.pmml")
+
+    print("Saved trained model")
+
+    #from xgboost import plot_importance
+    #model["xgb"].get_booster().feature_names = feature_names
+    #plot_importance(model["xgb"].get_booster(), max_num_features=10)
+    #save_plot("feature_importance.png", context=context)
+
+    feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
+
+    print("Recording training stats")
+
+    record_training_stats(train_df,
+                          features=feature_names,
+                          targets=[target_name],
+                          categorical=[target_name],
+                          feature_importance=feature_importance,
+                          context=context)
+    
+    print("All done!")
