@@ -39,6 +39,23 @@ def train(context: ModelContext, **kwargs):
     print("Finished training")
 
     
+    print("Inicia Install")
+    
+    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
+             is_binary=False)
+    
+    print("Inicia STO")
+    
+    print("Fin STO")
+    
+    sto = teradataml.Script(data=df,
+                        script_name='VIVO_AltoValorSTO.py',
+                        script_command=f'tdpython3 ./ob186007/VIVO_AltoValorSTO.py',
+                        data_order_column="Id",
+                        is_local_order=True,
+                        delimiter='\t',
+                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+      
     print("Inicia Consulta")
     
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
