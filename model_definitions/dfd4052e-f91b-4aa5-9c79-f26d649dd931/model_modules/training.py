@@ -3,6 +3,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 from nyoka import xgboost_to_pmml
 from teradataml import DataFrame
+from teradataml import *
 from aoa import (
     record_training_stats,
     save_plot,
@@ -41,21 +42,37 @@ def train(context: ModelContext, **kwargs):
     
     print("Inicia Install")
     
-    install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
-             is_binary=False)
+    #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
+    #         is_binary=False)
+    
+    execute_sql("call SYSUIF.INSTALL_FILE('stoSalesForecastnew', 'stoSalesForecastnew.py', 'cz!./stoSalesForecastnew.py');")
     
     print("Inicia STO")
     
     print("Fin STO")
     
-    sto = teradataml.Script(data=df,
-                        script_name='VIVO_AltoValorSTO.py',
-                        script_command=f'tdpython3 ./ob186007/VIVO_AltoValorSTO.py',
-                        data_order_column="Id",
-                        is_local_order=True,
-                        delimiter='\t',
-                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+    #sto = teradataml.Script(data=df,
+    #                    script_name='VIVO_AltoValorSTO.py',
+    #                    script_command=f'tdpython3 ./ob186007/VIVO_AltoValorSTO.py',
+    #                    data_order_column="Id",
+    #                    is_local_order=True,
+    #                    delimiter='\t',
+    #                    returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
       
+    qry= '''SELECT CURRENT_TIMESTAMP AS Id,Score 
+		FROM SCRIPT ( 
+		         ON  
+		         ( SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, 
+                          a.* FROM vivoaltovalor a                   
+		                 ) 
+						--HASH  BY  Id 
+						SCRIPT_COMMAND ( 'tdpython3 ./demo_user/VIVO_AltoValorSTO.py') 
+						RETURNS ('Id INT,  Score FLOAT') );
+						
+						SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')
+                        RETURNS('response VARCHAR(10000)'));'''
+
+    execute_sql(qry);
     print("Inicia Consulta")
     
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
