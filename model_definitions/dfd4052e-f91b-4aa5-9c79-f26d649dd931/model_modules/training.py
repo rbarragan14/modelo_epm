@@ -45,11 +45,11 @@ def train(context: ModelContext, **kwargs):
     #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
     #         is_binary=False)
     
-    execute_sql("call SYSUIF.INSTALL_FILE('stoSalesForecastnew', 'stoSalesForecastnew.py', 'cz!./stoSalesForecastnew.py');")
+    #execute_sql("call SYSUIF.INSTALL_FILE('stoSalesForecastnew', 'stoSalesForecastnew.py', 'cz!./stoSalesForecastnew.py');")
     
     print("Inicia STO")
     
-    print("Fin STO")
+    
     
     #sto = teradataml.Script(data=df,
     #                    script_name='VIVO_AltoValorSTO.py',
@@ -72,7 +72,12 @@ def train(context: ModelContext, **kwargs):
 						SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')
                         RETURNS('response VARCHAR(10000)'));'''
 
-    execute_sql(qry);
+    predictions_df = DataFrame.from_query(qry)
+ 
+    #execute_sql(qry);
+    
+    print("Fin STO")
+    
     print("Inicia Consulta")
     
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
