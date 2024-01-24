@@ -38,6 +38,12 @@ def train(context: ModelContext, **kwargs):
 
     print("Finished training")
 
+    print("Inicia Consulta")
+    
+    df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
+                          "a.* FROM vivoaltovalor a")
+
+    print("Fin Consulta")
     # export model artefacts
     joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
 
