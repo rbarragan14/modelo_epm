@@ -16,8 +16,8 @@ import joblib
 def train(context: ModelContext, **kwargs):
     aoa_create_context()
 
-    #feature_names = context.dataset_info.feature_names
-    #target_name = context.dataset_info.target_names[0]
+    feature_names = context.dataset_info.feature_names
+    target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
     train_df = DataFrame.from_query(context.dataset_info.sql)
