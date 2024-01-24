@@ -1,57 +1,75 @@
-from teradataml import DataFrame, create_context
-from teradatasqlalchemy.types import VARCHAR
-from collections import OrderedDict
-from aoa.sto.util import check_sto_version
+from teradataml import copy_to_sql, DataFrame
+from aoa import (
+    record_scoring_stats,
+    aoa_create_context,
+    ModelContext
+)
 
-import os
-import base64
-import dill
+import joblib
+import pandas as pd
 
 
-def score(data_conf, model_conf, **kwargs):
-    model_version = kwargs["model_version"]
-    model_table = "aoa_sto_models"
+def score(context: ModelContext, **kwargs):
 
-    create_context(host=os.environ["AOA_CONN_HOST"],
-                   username=os.environ["AOA_CONN_USERNAME"],
-                   password=os.environ["AOA_CONN_PASSWORD"],
-                   database=data_conf["schema"] if "schema" in data_conf and data_conf["schema"] != "" else None)
+    aoa_create_context()
 
-    check_sto_version()
+    model = joblib.load(f"{context.artifact_input_path}/model.joblib")
 
-    def score_partition(partition):
-        rows = partition.read()
-        if rows is None:
-            return None
+    feature_names = context.dataset_info.feature_names
+    target_name = context.dataset_info.target_names[0]
+    entity_key = context.dataset_info.entity_key
 
-        model_artefact = rows.loc[rows['n_row'] == 1, 'model_artefact'].iloc[0]
-        model = dill.loads(base64.b64decode(model_artefact))
+    features_tdf = DataFrame.from_query(context.dataset_info.sql)
+    features_pdf = features_tdf.to_pandas(all_rows=True)
 
-        out_df = rows[["ID"]]
-        out_df["predictions"] = model.predict(rows[model.features])
+    print("Scoring")
+    predictions_pdf = model.predict(features_pdf[feature_names])
 
-        return out_df
+    print("Finished Scoring")
 
-    print("Starting scoring...")
+    # store the predictions
+    predictions_pdf = pd.DataFrame(predictions_pdf, columns=[target_name])
+    predictions_pdf[entity_key] = features_pdf.index.values
+    # add job_id column so we know which execution this is from if appended to predictions table
+    predictions_pdf["job_id"] = context.job_id
 
-    # we join the model artefact to the 1st row of the data table so we can load it in the partition
-    query = f"""
-    SELECT d.*, CASE WHEN n_row=1 THEN m.model_artefact ELSE null END AS model_artefact 
-        FROM (SELECT x.*, ROW_NUMBER() OVER (PARTITION BY x.partition_id ORDER BY x.partition_id) AS n_row FROM {data_conf["table"]} x) AS d
-        LEFT JOIN {model_table} m
-        ON d.partition_id = m.partition_id
-        WHERE m.model_version = '{model_version}'
-    """
+    # teradataml doesn't match column names on append.. and so to match / use same table schema as for byom predict
+    # example (see README.md), we must add empty json_report column and change column order manually (v17.0.0.4)
+    # CREATE MULTISET TABLE pima_patient_predictions
+    # (
+    #     job_id VARCHAR(255), -- comes from airflow on job execution
+    #     PatientId BIGINT,    -- entity key as it is in the source data
+    #     HasDiabetes BIGINT,   -- if model automatically extracts target
+    #     json_report CLOB(1048544000) CHARACTER SET UNICODE  -- output of
+    # )
+    # PRIMARY INDEX ( job_id );
+    predictions_pdf["json_report"] = ""
+    predictions_pdf = predictions_pdf[["job_id", entity_key, target_name, "json_report"]]
 
-    df = DataFrame(query=query)
-    scored_df = df.map_partition(lambda partition: score_partition(partition),
-                                 data_partition_column="partition_ID",
-                                 returns=OrderedDict(
-                                     [('partition_id', VARCHAR(255)),
-                                      ('prediction', VARCHAR(255))]))
+    copy_to_sql(df=predictions_pdf,
+                schema_name=context.dataset_info.predictions_database,
+                table_name=context.dataset_info.predictions_table,
+                index=False,
+                if_exists="append")
 
-    scored_df.to_sql(data_conf["predictions"], if_exists="append")
+    print("Saved predictions in Teradata")
 
-    print(scored_df.head(2))
+    # calculate stats
+    predictions_df = DataFrame.from_query(f"""
+        SELECT 
+            * 
+        FROM {context.dataset_info.get_predictions_metadata_fqtn()} 
+            WHERE job_id = '{context.job_id}'
+    """)
 
-    print("Finished scoring...")
+    record_scoring_stats(features_df=features_tdf, predicted_df=predictions_df, context=context)
+
+
+# Add code required for RESTful API
+class ModelScorer(object):
+
+    def __init__(self):
+        self.model = joblib.load("artifacts/input/model.joblib")
+
+    def predict(self, data):
+        return self.model.predict(data)

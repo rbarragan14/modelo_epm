@@ -1,113 +1,62 @@
-from teradataml import DataFrame, create_context
-# managing connections
-import teradataml
-from teradataml import create_context, get_context, remove_context, execute_sql
-from collections import OrderedDict
-
-# managing teradataml dataframes
-from teradataml.dataframe.dataframe import DataFrame, in_schema
-from teradataml.dataframe.copy_to import copy_to_sql
-from teradataml import configure
-from teradataml import UtilFuncs
-from teradataml import save_byom, list_byom, retrieve_byom, PMMLPredict
-from teradatasqlalchemy import VARCHAR, TIMESTAMP, INTEGER, FLOAT
-from teradataml import valib
-from sqlalchemy import func, case, distinct, cast
-from teradataml.dbutils.filemgr import install_file,remove_file
-
-from teradataml import (
-    DataFrame,
-    GLM,
-    ScaleFit,
-    ScaleTransform
-)
+from xgboost import XGBClassifier
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.pipeline import Pipeline
+from nyoka import xgboost_to_pmml
+from teradataml import DataFrame
 from aoa import (
     record_training_stats,
     save_plot,
     aoa_create_context,
     ModelContext
 )
-from collections import OrderedDict
-
-import sys,os
-import numpy as np
-import json
-import base64
-#import dill
-import base64
-import pickle
 
 import joblib
+
 
 def train(context: ModelContext, **kwargs):
     aoa_create_context()
 
-    #feature_names = context.dataset_info.feature_names
-    #target_name = context.dataset_info.target_names[0]
+    feature_names = context.dataset_info.feature_names
+    target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
-    #train_df = DataFrame.from_query(context.dataset_info.sql)
-    #train_pdf = train_df.to_pandas(all_rows=True)
+    train_df = DataFrame.from_query(context.dataset_info.sql)
+    train_pdf = train_df.to_pandas(all_rows=True)
 
     # split data into X and y
-    #X_train = train_pdf[feature_names]
-    #y_train = train_pdf[target_name]
+    X_train = train_pdf[feature_names]
+    y_train = train_pdf[target_name]
 
     print("Starting training...")
 
-    #from teradataml.dbutils.filemgr import install_file,remove_file
-    #from teradataml.analytics.utils import display_analytic_functions
+    # fit model to training data
+    model = Pipeline([('scaler', MinMaxScaler()),
+                      ('xgb', XGBClassifier(eta=context.hyperparams["eta"],
+                                            max_depth=context.hyperparams["max_depth"]))])
 
-        # Install STO Python script
-    #try:
-    #    remove_file (file_identifier='VIVO_AltoValorSTO', force_remove=True)
-    #except:
-    #    pass
-    #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"VIVO_AltoValorSTO.py", is_binary=False)
-
-    # Install pickled model
-    #try:
-    #    remove_file (file_identifier='model_gbc_alt_valor', force_remove=True)
-    #except:
-    #    pass
-    #install_file(file_identifier='model_gbc_alt_valor', file_path=f"./model_gbc_alt_valor.pickle", 
-    #            is_binary=True)
-
-    df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
-                          "a.* FROM vivoaltovalor a")
-    sto = teradataml.Script(data=df,
-                        script_name='VIVO_AltoValorSTO.py',
-                        script_command=f'tdpython3 ./demo_user/VIVO_AltoValorSTO.py',
-                        data_order_column="Id",
-                        is_local_order=True,
-                        delimiter='\t',
-                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+    model.fit(X_train, y_train)
 
     print("Finished training")
 
     # export model artefacts
-    #joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
+    joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
 
     # we can also save as pmml so it can be used for In-Vantage scoring etc.
-    #xgboost_to_pmml(pipeline=model, col_names=feature_names, target_name=target_name,
-    #                pmml_f_name=f"{context.artifact_output_path}/model.pmml")
+    xgboost_to_pmml(pipeline=model, col_names=feature_names, target_name=target_name,
+                    pmml_f_name=f"{context.artifact_output_path}/model.pmml")
 
     print("Saved trained model")
 
-    #from xgboost import plot_importance
-    #model["xgb"].get_booster().feature_names = feature_names
-    #plot_importance(model["xgb"].get_booster(), max_num_features=10)
-    #save_plot("feature_importance.png", context=context)
+    from xgboost import plot_importance
+    model["xgb"].get_booster().feature_names = feature_names
+    plot_importance(model["xgb"].get_booster(), max_num_features=10)
+    save_plot("feature_importance.png", context=context)
 
-    #feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
+    feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
 
-    print("Recording training stats")
-
-    #record_training_stats(train_df,
-    #                      features=feature_names,
-    #                      targets=[target_name],
-    #                      categorical=[target_name],
-    #                      feature_importance=feature_importance,
-    #                      context=context)
-    
-    print("All done!")
+    record_training_stats(train_df,
+                          features=feature_names,
+                          targets=[target_name],
+                          categorical=[target_name],
+                          feature_importance=feature_importance,
+                          context=context)

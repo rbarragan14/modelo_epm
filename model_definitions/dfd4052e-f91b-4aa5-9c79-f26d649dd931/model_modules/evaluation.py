@@ -1,78 +1,73 @@
-from teradataml import DataFrame, create_context
-from teradatasqlalchemy.types import INTEGER, VARCHAR, CLOB
 from sklearn import metrics
-from collections import OrderedDict
-from aoa.sto.util import save_metadata, save_evaluation_metrics, check_sto_version
+from teradataml import DataFrame, copy_to_sql
+from aoa import (
+    record_evaluation_stats,
+    save_plot,
+    aoa_create_context,
+    ModelContext
+)
 
-import os
-import numpy as np
+import joblib
 import json
-import base64
-import dill
+import numpy as np
+import pandas as pd
 
 
-def evaluate(data_conf, model_conf, **kwargs):
-    model_version = kwargs["model_version"]
-    model_table = "aoa_sto_models"
+def evaluate(context: ModelContext, **kwargs):
 
-    create_context(host=os.environ["AOA_CONN_HOST"],
-                   username=os.environ["AOA_CONN_USERNAME"],
-                   password=os.environ["AOA_CONN_PASSWORD"],
-                   database=data_conf["schema"] if "schema" in data_conf and data_conf["schema"] != "" else None)
+    aoa_create_context()
 
-    check_sto_version()
+    model = joblib.load(f"{context.artifact_input_path}/model.joblib")
 
-    def eval_partition(partition):
-        rows = partition.read()
-        if rows is None:
-            return None
+    feature_names = context.dataset_info.feature_names
+    target_name = context.dataset_info.target_names[0]
 
-        model_artefact = rows.loc[rows['n_row'] == 1, 'model_artefact'].iloc[0]
-        model = dill.loads(base64.b64decode(model_artefact))
+    test_df = DataFrame.from_query(context.dataset_info.sql)
+    test_pdf = test_df.to_pandas(all_rows=True)
 
-        X_test = rows[model.features]
-        y_test = rows[['Y1']]
+    X_test = test_pdf[feature_names]
+    y_test = test_pdf[target_name]
 
-        y_pred = model.predict(X_test)
+    print("Scoring")
+    y_pred = model.predict(X_test)
 
-        partition_id = rows.partition_ID.iloc[0]
+    y_pred_tdf = pd.DataFrame(y_pred, columns=[target_name])
+    y_pred_tdf["PatientId"] = test_pdf["PatientId"].values
 
-        # record whatever partition level information you want like rows, data stats, metrics, explainability, etc
-        partition_metadata = json.dumps({
-            "num_rows": rows.shape[0],
-            "metrics": {
-                "MAE": "{:.2f}".format(metrics.mean_absolute_error(y_test, y_pred)),
-                "MSE": "{:.2f}".format(metrics.mean_squared_error(y_test, y_pred)),
-                "R2": "{:.2f}".format(metrics.r2_score(y_test, y_pred))
-            }
-        })
+    evaluation = {
+        'Accuracy': '{:.2f}'.format(metrics.accuracy_score(y_test, y_pred)),
+        'Recall': '{:.2f}'.format(metrics.recall_score(y_test, y_pred)),
+        'Precision': '{:.2f}'.format(metrics.precision_score(y_test, y_pred)),
+        'f1-score': '{:.2f}'.format(metrics.f1_score(y_test, y_pred))
+    }
 
-        return np.array([[partition_id, rows.shape[0], partition_metadata]])
+    with open(f"{context.artifact_output_path}/metrics.json", "w+") as f:
+        json.dump(evaluation, f)
 
-    print("Starting evaluation...")
+    metrics.plot_confusion_matrix(model, X_test, y_test)
+    save_plot('Confusion Matrix', context=context)
 
-    # we join the model artefact to the 1st row of the data table so we can load it in the partition
-    query = f"""
-    SELECT d.*, CASE WHEN n_row=1 THEN m.model_artefact ELSE null END AS model_artefact 
-        FROM (SELECT x.*, ROW_NUMBER() OVER (PARTITION BY x.partition_id ORDER BY x.partition_id) AS n_row FROM {data_conf["table"]} x) AS d
-        LEFT JOIN {model_table} m
-        ON d.partition_id = m.partition_id
-        WHERE m.model_version = '{model_version}'
-    """
+    metrics.plot_roc_curve(model, X_test, y_test)
+    save_plot('ROC Curve', context=context)
 
-    df = DataFrame(query=query)
-    eval_df = df.map_partition(lambda partition: eval_partition(partition),
-                               data_partition_column="partition_ID",
-                               returns=OrderedDict(
-                                   [('partition_id', VARCHAR(255)),
-                                    ('num_rows', INTEGER()),
-                                    ('partition_metadata', CLOB())]))
+    # xgboost has its own feature importance plot support but lets use shap as explainability example
+    import shap
 
-    # persist to temporary table for computing global metrics
-    eval_df.to_sql("sto_eval_results", temporary=True)
-    eval_df = DataFrame("sto_eval_results")
+    shap_explainer = shap.TreeExplainer(model['xgb'])
+    shap_values = shap_explainer.shap_values(X_test)
 
-    save_metadata(eval_df)
-    save_evaluation_metrics(eval_df, ["MAE", "MSE", "R2"])
+    shap.summary_plot(shap_values, X_test, feature_names=feature_names,
+                      show=False, plot_size=(12, 8), plot_type='bar')
+    save_plot('SHAP Feature Importance', context=context)
 
-    print("Finished evaluation")
+    feature_importance = pd.DataFrame(list(zip(feature_names, np.abs(shap_values).mean(0))),
+                                      columns=['col_name', 'feature_importance_vals'])
+    feature_importance = feature_importance.set_index("col_name").T.to_dict(orient='records')[0]
+
+    predictions_table = "evaluation_preds_tmp"
+    copy_to_sql(df=y_pred_tdf, table_name=predictions_table, index=False, if_exists="replace", temporary=True)
+
+    record_evaluation_stats(features_df=test_df,
+                            predicted_df=DataFrame.from_query(f"SELECT * FROM {predictions_table}"),
+                            importance=feature_importance,
+                            context=context)
