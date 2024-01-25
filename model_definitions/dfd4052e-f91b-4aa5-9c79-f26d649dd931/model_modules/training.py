@@ -48,7 +48,7 @@ def train(context: ModelContext, **kwargs):
     print("Finished training")
 
     
-    y_train.to_sql('y_train',  if_exists="replace")
+    y_train.to_sql('y_train', primary_index="feature_names", if_exists="replace")
     
     print("Inicia Install")
     
