@@ -4,6 +4,7 @@ from sklearn.pipeline import Pipeline
 from nyoka import xgboost_to_pmml
 from teradataml import DataFrame
 from teradataml import *
+from teradataml import create_context, get_context, remove_context, execute_sql
 
 from aoa import (
     record_training_stats,
