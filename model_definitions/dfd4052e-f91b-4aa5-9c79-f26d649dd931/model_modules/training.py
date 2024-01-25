@@ -90,10 +90,11 @@ def train(context: ModelContext, **kwargs):
 						
 						"SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')"
                         "RETURNS('response VARCHAR(10000)')))"
+    )
  
     #execute_sql(qry);
     
-    #print(qry)
+    print(qry)
     
     print("Inicia Consulta")
     
