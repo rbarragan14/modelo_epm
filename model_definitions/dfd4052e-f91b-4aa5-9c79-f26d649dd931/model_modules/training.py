@@ -78,7 +78,7 @@ def train(context: ModelContext, **kwargs):
     execute_sql("SET SESSION SEARCHUIFDBPATH = demo_user;")
     execute_sql("database demo_user;")
     
-
+    print("Inicia Query")
     predictions_df = DataFrame.from_query("SELECT CURRENT_TIMESTAMP AS Id,Score "
 		"FROM SCRIPT ( "
 		         "ON  "
@@ -87,10 +87,7 @@ def train(context: ModelContext, **kwargs):
 		          "       ) "
 						"HASH  BY  Id "
 						"SCRIPT_COMMAND ( 'tdpython3 ./demo_user/VIVO_AltoValorSTO.py') "
-						"RETURNS ('Id INT,  Score FLOAT') );"
-						
-						"SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')"
-                        "RETURNS('response VARCHAR(10000)')))"
+						"RETURNS ('Id INT,  Score FLOAT') );"											
     )
  
     #execute_sql(qry);
