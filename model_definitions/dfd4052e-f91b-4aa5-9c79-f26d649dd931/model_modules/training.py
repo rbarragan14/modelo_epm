@@ -76,7 +76,7 @@ def train(context: ModelContext, **kwargs):
 
  
     execute_sql("SET SESSION SEARCHUIFDBPATH = demo_user;")
-    execute_sql("SET database demo_user;")
+    execute_sql("database demo_user;")
     
 
     predictions_df = DataFrame.from_query("SELECT CURRENT_TIMESTAMP AS Id,Score "
