@@ -93,7 +93,7 @@ def train(context: ModelContext, **kwargs):
  
     #execute_sql(qry);
     
-    print(qry)
+    #print(qry)
     
     print("Inicia Consulta")
     
