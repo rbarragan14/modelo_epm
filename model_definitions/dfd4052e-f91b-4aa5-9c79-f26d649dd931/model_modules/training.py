@@ -1,8 +1,4 @@
 import teradataml
-from xgboost import XGBClassifier
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.pipeline import Pipeline
-from nyoka import xgboost_to_pmml
 from teradataml import DataFrame
 from teradataml import *
 from teradataml import create_context, get_context, remove_context, execute_sql
@@ -52,48 +48,10 @@ def train(context: ModelContext, **kwargs):
     
     print("Inicia STO")
     
-    
-    
-    #sto = teradataml.Script(data=df,
-    #                    script_name='VIVO_AltoValorSTO.py',
-    #                    script_command=f'tdpython3 ./ob186007/VIVO_AltoValorSTO.py',
-    #                    data_order_column="Id",
-    #                    is_local_order=True,
-    #                    delimiter='\t',
-    #                    returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
-      
-    qry= '''SELECT CURRENT_TIMESTAMP AS Id,Score 
-		FROM SCRIPT ( 
-		         ON  
-		         ( SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, 
-                          a.* FROM vivoaltovalor a                   
-		                 ) 
-						--HASH  BY  Id 
-						SCRIPT_COMMAND ( 'tdpython3 ./demo_user/VIVO_AltoValorSTO.py') 
-						RETURNS ('Id INT,  Score FLOAT') );
-						
-						SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')
-                        RETURNS('response VARCHAR(10000)'));'''
-
  
     execute_sql("SET SESSION SEARCHUIFDBPATH = demo_user;")
     execute_sql("database demo_user;")
     
-    print("Inicia Query")
-    predictions_df = DataFrame.from_query("SELECT CURRENT_TIMESTAMP AS Id,Score "
-		"FROM SCRIPT ( "
-		         "ON  "
-		         "( SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
-                  "        a.* FROM vivoaltovalor a                   "
-		          "       ) "
-						"HASH  BY  Id "
-						"SCRIPT_COMMAND ( 'tdpython3 ./demo_user/VIVO_AltoValorSTO.py') "
-						"RETURNS ('Id INT,  Score FLOAT') );"											
-    )
- 
-    #execute_sql(qry);
-    print("Termina Query")
-    print(qry)
     
     print("Inicia Consulta")
     
