@@ -107,27 +107,21 @@ def train(context: ModelContext, **kwargs):
 
     print("Inicia Nuevo")
     
-    model_pdf = df3.result.to_pandas()[['Id','Score']]
-    predictor_dict = {}
+    #model_pdf = model.result.to_pandas()[['Id','Score']]
+    #predictor_dict = {}
     
-    for index, row in model_pdf.iterrows():
-        if row['predictor'] in feature_names:
-            value = row['estimate']
-            predictor_dict[row['predictor']] = value
+    #for index, row in model_pdf.iterrows():
+    #    if row['predictor'] in feature_names:
+    #        value = row['estimate']
+    #        predictor_dict[row['predictor']] = value
 
-    feature_importance = dict(sorted(predictor_dict.items(), key=lambda x: x[1], reverse=True))
-    keys, values = zip(*feature_importance.items())
-    norm_values = (values-np.min(values))/(np.max(values)-np.min(values))
-    feature_importance = {keys[i]: float(norm_values[i]*1000) for i in range(len(keys))}
-    plot_feature_importance(feature_importance, f"{context.artifact_output_path}/feature_importance")
+    #feature_importance = dict(sorted(predictor_dict.items(), key=lambda x: x[1], reverse=True))
+    #keys, values = zip(*feature_importance.items())
+    #norm_values = (values-np.min(values))/(np.max(values)-np.min(values))
+    #feature_importance = {keys[i]: float(norm_values[i]*1000) for i in range(len(keys))}
+    #plot_feature_importance(feature_importance, f"{context.artifact_output_path}/feature_importance")
 
 
-    record_training_stats(train_df,
-                          features=feature_names,
-                          targets=[target_name],
-                          categorical=[target_name],
-                          feature_importance=feature_importance,
-                          context=context)
     
     #record_training_stats(train_df,
     #                      features=feature_names,
