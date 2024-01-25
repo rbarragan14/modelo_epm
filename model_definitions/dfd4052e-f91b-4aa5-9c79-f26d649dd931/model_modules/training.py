@@ -104,7 +104,7 @@ def train(context: ModelContext, **kwargs):
     
     sto = teradataml.Script(data=df,
                         script_name='VIVO_AltoValorSTO.py',
-                        script_command=f'tdpython3 ./ob186007/VIVO_AltoValorSTO.py',
+                        script_command=f'tdpython3 ./demo_user/VIVO_AltoValorSTO.py',
                         data_order_column="Id",
                         is_local_order=True,
                         delimiter='\t',
@@ -113,6 +113,14 @@ def train(context: ModelContext, **kwargs):
     sto.execute_script()
     
     print("Fin sto")
+    df1 = df.merge(right = sto.result, on = ["Id"], lsuffix = "t1", rsuffix = "t2")
+    df2=df1.assign(drop_columns=False, Id = df1.t1_Id)
+    df3=df2.drop(['t1_Id', 't2_Id'], axis=1)
+    
+    print("Fin sto")
+    
+    df3.to_sql('vivoaltovalor_score', primary_index="Id", if_exists="replace")
+
     # export model artefacts
     #joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
 
