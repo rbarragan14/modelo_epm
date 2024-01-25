@@ -47,6 +47,7 @@ def train(context: ModelContext, **kwargs):
 
     print("Finished training")
 
+    y_train
     
     print("Inicia Install")
     
