@@ -4,6 +4,7 @@ from sklearn.pipeline import Pipeline
 from nyoka import xgboost_to_pmml
 from teradataml import DataFrame
 from teradataml import *
+
 from aoa import (
     record_training_stats,
     save_plot,
@@ -31,11 +32,11 @@ def train(context: ModelContext, **kwargs):
     print("Starting training...")
 
     # fit model to training data
-    model = Pipeline([('scaler', MinMaxScaler()),
-                      ('xgb', XGBClassifier(eta=context.hyperparams["eta"],
-                                            max_depth=context.hyperparams["max_depth"]))])
+    #model = Pipeline([('scaler', MinMaxScaler()),
+    #                  ('xgb', XGBClassifier(eta=context.hyperparams["eta"],
+    #                                        max_depth=context.hyperparams["max_depth"]))])
 
-    model.fit(X_train, y_train)
+    #model.fit(X_train, y_train)
 
     print("Finished training")
 
@@ -72,11 +73,27 @@ def train(context: ModelContext, **kwargs):
 						SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')
                         RETURNS('response VARCHAR(10000)'));'''
 
-    predictions_df = DataFrame.from_query(qry)
+ 
+    execute_sql("SET SESSION SEARCHUIFDBPATH = demo_user;")
+    execute_sql("SET database demo_user;")
+    
+
+    predictions_df = DataFrame.from_query("SELECT CURRENT_TIMESTAMP AS Id,Score "
+		"FROM SCRIPT ( "
+		         "ON  "
+		         "( SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
+                  "        a.* FROM vivoaltovalor a                   "
+		          "       ) "
+						"HASH  BY  Id "
+						"SCRIPT_COMMAND ( 'tdpython3 ./demo_user/VIVO_AltoValorSTO.py') "
+						"RETURNS ('Id INT,  Score FLOAT') );"
+						
+						"SELECT DISTINCT * FROM SCRIPT (SCRIPT_COMMAND('ls -l demo_user')"
+                        "RETURNS('response VARCHAR(10000)')))"
  
     #execute_sql(qry);
     
-    print("Fin STO")
+    print(qry)
     
     print("Inicia Consulta")
     
@@ -87,20 +104,21 @@ def train(context: ModelContext, **kwargs):
     
 
     # export model artefacts
-    joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
+    #joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
 
     # we can also save as pmml so it can be used for In-Vantage scoring etc.
-    xgboost_to_pmml(pipeline=model, col_names=feature_names, target_name=target_name,
-                    pmml_f_name=f"{context.artifact_output_path}/model.pmml")
+    #xgboost_to_pmml(pipeline=model, col_names=feature_names, target_name=target_name,
+    #                pmml_f_name=f"{context.artifact_output_path}/model.pmml")
 
     print("Saved trained model")
 
-    from xgboost import plot_importance
-    model["xgb"].get_booster().feature_names = feature_names
-    plot_importance(model["xgb"].get_booster(), max_num_features=10)
+    #from xgboost import plot_importance
+    #model["xgb"].get_booster().feature_names = feature_names
+    
+    #plot_importance(model["xgb"].get_booster(), max_num_features=10)
     save_plot("feature_importance.png", context=context)
 
-    feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
+    #feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
 
     record_training_stats(train_df,
                           features=feature_names,
