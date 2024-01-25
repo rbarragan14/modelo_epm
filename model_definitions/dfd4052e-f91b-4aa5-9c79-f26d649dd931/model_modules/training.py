@@ -1,3 +1,4 @@
+import teradataml
 from xgboost import XGBClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
@@ -101,7 +102,17 @@ def train(context: ModelContext, **kwargs):
 
     print("Fin Consulta")
     
-
+    sto = teradataml.Script(data=df,
+                        script_name='VIVO_AltoValorSTO.py',
+                        script_command=f'tdpython3 ./ob186007/VIVO_AltoValorSTO.py',
+                        data_order_column="Id",
+                        is_local_order=True,
+                        delimiter='\t',
+                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+    
+    sto.execute_script()
+    
+    print("Fin sto")
     # export model artefacts
     #joblib.dump(model, f"{context.artifact_output_path}/model.joblib")
 
