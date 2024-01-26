@@ -47,8 +47,8 @@ def train(context: ModelContext, **kwargs):
 
     print("Finished training")
 
-    
-    y_train.to_sql('y_train', primary_index="target_name", if_exists="replace")
+    database = schema_name=context.dataset_info.predictions_database
+    print(database)
     
     print("Inicia Install")
     
