@@ -47,8 +47,7 @@ def train(context: ModelContext, **kwargs):
 
     print("Finished training")
 
-    database = schema_name=context.dataset_info.predictions_database
-    print(database)
+    print(schema_name=context.dataset_info.predictions_database.__str__)
     
     print("Inicia Install")
     
