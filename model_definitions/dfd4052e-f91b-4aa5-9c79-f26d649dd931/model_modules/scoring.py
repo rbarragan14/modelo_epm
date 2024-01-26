@@ -7,6 +7,9 @@ from aoa import (
     ModelContext
 )
 
+
+
+
 import joblib
 import pandas as pd
 from collections import OrderedDict
@@ -69,7 +72,7 @@ def score(context: ModelContext, **kwargs):
                         data_order_column="Id",
                         is_local_order=True,
                         delimiter='\t',
-                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+                        returns=OrderedDict([("Id", int),("Score", float)]))
     
     sto.execute_script()
     
