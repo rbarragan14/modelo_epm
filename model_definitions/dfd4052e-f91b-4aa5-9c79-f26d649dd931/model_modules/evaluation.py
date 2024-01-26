@@ -1,4 +1,3 @@
-from sklearn import metrics
 from teradataml import DataFrame, copy_to_sql
 from aoa import (
     record_evaluation_stats,
