@@ -16,7 +16,7 @@ def evaluate(context: ModelContext, **kwargs):
 
     aoa_create_context()
 
-    model = joblib.load(f"{context.artifact_input_path}/model.joblib")
+    #model = joblib.load(f"{context.artifact_input_path}/model.joblib")
 
     feature_names = context.dataset_info.feature_names
     target_name = context.dataset_info.target_names[0]
