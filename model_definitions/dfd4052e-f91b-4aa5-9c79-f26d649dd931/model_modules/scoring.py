@@ -1,4 +1,6 @@
+import teradataml
 from teradataml import copy_to_sql, DataFrame
+from teradataml import create_context, get_context, remove_context, execute_sql
 from aoa import (
     record_scoring_stats,
     aoa_create_context,
@@ -45,6 +47,44 @@ def score(context: ModelContext, **kwargs):
     # PRIMARY INDEX ( job_id );
     predictions_pdf["json_report"] = ""
     predictions_pdf = predictions_pdf[["job_id", entity_key, target_name, "json_report"]]
+
+
+    print("Inicia STO")
+    
+ 
+    execute_sql("SET SESSION SEARCHUIFDBPATH = demo_user;")
+    execute_sql("database demo_user;")
+    
+    
+    print("Inicia Consulta")
+    
+    df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
+                          "a.* FROM vivoaltovalor a")
+
+    print("Fin Consulta")
+    
+    sto = teradataml.Script(data=df,
+                        script_name='VIVO_AltoValorSTO.py',
+                        script_command=f'tdpython3 ./demo_user/VIVO_AltoValorSTO.py',
+                        data_order_column="Id",
+                        is_local_order=True,
+                        delimiter='\t',
+                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+    
+    sto.execute_script()
+    
+    print("Fin sto")
+    df1 = df.merge(right = sto.result, on = ["Id"], lsuffix = "t1", rsuffix = "t2")
+    df2=df1.assign(drop_columns=False, Id = df1.t1_Id)
+    df3=df2.drop(['t1_Id', 't2_Id'], axis=1)
+    
+    print("Fin sto")
+    
+    df3.to_sql('vivoaltovalor_score', primary_index="Id", if_exists="replace")
+    
+    
+    print("Fin STO")
+
 
     copy_to_sql(df=predictions_pdf,
                 schema_name=context.dataset_info.predictions_database,
