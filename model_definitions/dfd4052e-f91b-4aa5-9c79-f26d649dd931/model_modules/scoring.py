@@ -1,3 +1,4 @@
+from pickle import FLOAT
 from sqlalchemy import VARCHAR
 import teradataml
 from teradataml import copy_to_sql, DataFrame
@@ -68,7 +69,7 @@ def score(context: ModelContext, **kwargs):
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
                           "a.* FROM vivoaltovalor a")
 
-    print("Fin Consulta............ hOLA")
+    print("Fin Consulta............ Hola 123")
     
     sto = teradataml.Script(data=df,
                         script_name='VIVO_AltoValorSTO.py',
@@ -76,7 +77,7 @@ def score(context: ModelContext, **kwargs):
                         data_order_column="Id",
                         is_local_order=True,
                         delimiter='\t',
-                        returns=OrderedDict([("Id", INTEGER),("Score", float)]))
+                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
     
     sto.execute_script()
     
