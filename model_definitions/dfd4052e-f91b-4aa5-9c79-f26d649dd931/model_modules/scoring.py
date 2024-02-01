@@ -65,7 +65,7 @@ def score(context: ModelContext, **kwargs):
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
                           "a.* FROM vivoaltovalor a")
 
-    print("Fin Consulta")
+    print("Fin Consulta............")
     
     sto = teradataml.Script(data=df,
                         script_name='VIVO_AltoValorSTO.py',
