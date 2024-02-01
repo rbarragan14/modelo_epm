@@ -1,3 +1,4 @@
+from sqlalchemy import VARCHAR
 import teradataml
 from teradataml import copy_to_sql, DataFrame
 from teradataml import create_context, get_context, remove_context, execute_sql
@@ -72,7 +73,7 @@ def score(context: ModelContext, **kwargs):
                         data_order_column="Id",
                         is_local_order=True,
                         delimiter='\t',
-                        returns=OrderedDict([("Id", int),("Score", float)]))
+                        returns=OrderedDict([("Id", VARCHAR (100)),("Score", float)]))
     
     sto.execute_script()
     
