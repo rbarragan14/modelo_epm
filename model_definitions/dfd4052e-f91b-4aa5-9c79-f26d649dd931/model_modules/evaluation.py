@@ -18,14 +18,14 @@ def evaluate(context: ModelContext, **kwargs):
 
     #model = joblib.load(f"{context.artifact_input_path}/model.joblib")
 
-    feature_names = context.dataset_info.feature_names
-    target_name = context.dataset_info.target_names[0]
+    #ULTIMA  feature_names = context.dataset_info.feature_names
+    #ULTIMA  target_name = context.dataset_info.target_names[0]
 
-    test_df = DataFrame.from_query(context.dataset_info.sql)
-    test_pdf = test_df.to_pandas(all_rows=True)
+    #ULTIMA  test_df = DataFrame.from_query(context.dataset_info.sql)
+    #ULTIMA  test_pdf = test_df.to_pandas(all_rows=True)
 
-    X_test = test_pdf[feature_names]
-    y_test = test_pdf[target_name]
+    #ULTIMA  X_test = test_pdf[feature_names]
+    #ULTIMA  y_test = test_pdf[target_name]
 
     print("Scoring")
     #y_pred = model.predict(X_test)
