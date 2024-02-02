@@ -27,12 +27,12 @@ def score(context: ModelContext, **kwargs):
 
     #model = joblib.load(f"{context.artifact_input_path}/model.joblib")
 
-    feature_names = context.dataset_info.feature_names
-    target_name = context.dataset_info.target_names[0]
-    entity_key = context.dataset_info.entity_key
+    #feature_names = context.dataset_info.feature_names
+    #target_name = context.dataset_info.target_names[0]
+    #entity_key = context.dataset_info.entity_key
 
-    features_tdf = DataFrame.from_query(context.dataset_info.sql)
-    features_pdf = features_tdf.to_pandas(all_rows=True)
+    #features_tdf = DataFrame.from_query(context.dataset_info.sql)
+    #features_pdf = features_tdf.to_pandas(all_rows=True)
 
     print("Scoring")
     #predictions_pdf = model.predict(features_pdf[feature_names])
