@@ -62,8 +62,8 @@ def score(context: ModelContext, **kwargs):
     print("Inicia STO")
     
  
-    execute_sql("SET SESSION SEARCHUIFDBPATH = demo_user;")
-    execute_sql("database demo_user;")
+    execute_sql("SET SESSION SEARCHUIFDBPATH = 80564586;")
+    execute_sql("database 80564586;")
     
     
     print("Inicia Consulta")
@@ -71,11 +71,11 @@ def score(context: ModelContext, **kwargs):
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
                           "a.* FROM vivoaltovalor a")
 
-    print("Fin Consulta............ Hola 123456")
+    print("Fin Consulta............ Hola 80564586")
     
     sto = teradataml.Script(data=df,
                         script_name='VIVO_AltoValorSTO.py',
-                        script_command=f'tdpython3 ./demo_user/VIVO_AltoValorSTO.py',
+                        script_command=f'tdpython3 ./80564586/VIVO_AltoValorSTO.py',
                         data_order_column="Id",
                         is_local_order=True,
                         delimiter='\t',
