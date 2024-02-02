@@ -79,9 +79,10 @@ def score(context: ModelContext, **kwargs):
                         data_order_column="Id",
                         is_local_order=True,
                         delimiter='\t',
-                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())]))
+                        returns=OrderedDict([("Id", INTEGER()),("Score", FLOAT())])) 
     
     sto.execute_script()
+    
     
     print("Fin sto")
     df1 = df.merge(right = sto.result, on = ["Id"], lsuffix = "t1", rsuffix = "t2")
