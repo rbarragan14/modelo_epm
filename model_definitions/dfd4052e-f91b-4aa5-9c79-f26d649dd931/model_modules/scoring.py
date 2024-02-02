@@ -88,7 +88,7 @@ def score(context: ModelContext, **kwargs):
     df2=df1.assign(drop_columns=False, Id = df1.t1_Id)
     df3=df2.drop(['t1_Id', 't2_Id'], axis=1)
     
-    print("Fin sto")
+  
     
     df3.to_sql('vivoaltovalor_score', primary_index="Id", if_exists="replace")
     

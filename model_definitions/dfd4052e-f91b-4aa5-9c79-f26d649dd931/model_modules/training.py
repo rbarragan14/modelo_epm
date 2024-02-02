@@ -25,16 +25,16 @@ def plot_feature_importance(fi, img_filename):
 def train(context: ModelContext, **kwargs):
     aoa_create_context()
 
-    feature_names = context.dataset_info.feature_names
-    target_name = context.dataset_info.target_names[0]
+    #ULTIMA  feature_names = context.dataset_info.feature_names
+    #ULTIMA  target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
-    train_df = DataFrame.from_query(context.dataset_info.sql)
-    train_pdf = train_df.to_pandas(all_rows=True)
+    #ULTIMA  train_df = DataFrame.from_query(context.dataset_info.sql)
+    #ULTIMA  train_pdf = train_df.to_pandas(all_rows=True)
 
     # split data into X and y
-    X_train = train_pdf[feature_names]
-    y_train = train_pdf[target_name]
+    #ULTIMA  X_train = train_pdf[feature_names]
+    #ULTIMA  y_train = train_pdf[target_name]
 
     print("Starting training...")
 
@@ -46,6 +46,7 @@ def train(context: ModelContext, **kwargs):
     #model.fit(X_train, y_train)
 
     print("Finished training") 
+    print ()
 
     #print(context.dataset_info.predictions_database)
     
