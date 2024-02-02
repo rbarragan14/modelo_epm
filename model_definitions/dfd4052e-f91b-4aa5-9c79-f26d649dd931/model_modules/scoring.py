@@ -59,7 +59,7 @@ def score(context: ModelContext, **kwargs):
     #predictions_pdf = predictions_pdf[["job_id", entity_key, target_name, "json_report"]]
 
 
-    print("Inicia STO pocanalytics")
+    print("Inicia STO pocanalytics ")
     
  
     execute_sql("SET SESSION SEARCHUIFDBPATH = pocanalytics;")
