@@ -42,6 +42,8 @@ def train(context: ModelContext, **kwargs):
     print (qry1)
     
     execute_sql(qry1)
+    
+    print(os.environ["AOA_CONN_DATABASE"])
 
     # fit model to training data
     #model = Pipeline([('scaler', MinMaxScaler()),
