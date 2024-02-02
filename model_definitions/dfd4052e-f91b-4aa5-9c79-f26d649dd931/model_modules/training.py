@@ -25,7 +25,7 @@ def plot_feature_importance(fi, img_filename):
 def train(context: ModelContext, **kwargs):
     aoa_create_context()
 
-    #ULTIMA  feature_names = context.dataset_info.feature_names
+    feature_names = context.dataset_info.feature_names
     #ULTIMA  target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
