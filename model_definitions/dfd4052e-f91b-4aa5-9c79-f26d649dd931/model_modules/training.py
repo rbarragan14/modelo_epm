@@ -26,15 +26,15 @@ def train(context: ModelContext, **kwargs):
     aoa_create_context()
 
     feature_names = context.dataset_info.feature_names
-    #ULTIMA  target_name = context.dataset_info.target_names[0]
+    target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
-    #ULTIMA  train_df = DataFrame.from_query(context.dataset_info.sql)
-    #ULTIMA  train_pdf = train_df.to_pandas(all_rows=True)
+    train_df = DataFrame.from_query(context.dataset_info.sql)
+    train_pdf = train_df.to_pandas(all_rows=True)
 
     # split data into X and y
-    #ULTIMA  X_train = train_pdf[feature_names]
-    #ULTIMA  y_train = train_pdf[target_name]
+    X_train = train_pdf[feature_names]
+    y_train = train_pdf[target_name]
 
     print("Starting training...")
 
@@ -46,7 +46,7 @@ def train(context: ModelContext, **kwargs):
     #model.fit(X_train, y_train)
 
     print("Finished training") 
-    print ()
+    print (context.dataset_info.username)
 
     #print(context.dataset_info.predictions_database)
     
@@ -74,7 +74,7 @@ def train(context: ModelContext, **kwargs):
     save_plot("feature_importance.png", context=context)
 
     #feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
-
+    feature_importance = train_df
     print("Inicia Nuevo")
     
     #model_pdf = model.result.to_pandas()[['Id','Score']]
