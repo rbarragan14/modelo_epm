@@ -37,6 +37,11 @@ def train(context: ModelContext, **kwargs):
     # ULTIMO   y_train = train_pdf[target_name]
     print(os.environ["AOA_CONN_USERNAME"])
     print("Starting training...")
+    
+    qry1 = "SET SESSION SEARCHUIFDBPATH = " +  os.environ["AOA_CONN_USERNAME"] + ";"
+    print (qry1)
+    
+    execute_sql(qry1)
 
     # fit model to training data
     #model = Pipeline([('scaler', MinMaxScaler()),
