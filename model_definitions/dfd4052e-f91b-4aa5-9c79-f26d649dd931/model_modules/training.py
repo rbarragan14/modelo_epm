@@ -25,17 +25,17 @@ def plot_feature_importance(fi, img_filename):
 def train(context: ModelContext, **kwargs):
     aoa_create_context()
 
-    feature_names = context.dataset_info.feature_names
-    target_name = context.dataset_info.target_names[0]
+    # ULTIMO   feature_names = context.dataset_info.feature_names
+    # ULTIMO   target_name = context.dataset_info.target_names[0]
 
     # read training dataset from Teradata and convert to pandas
-    train_df = DataFrame.from_query(context.dataset_info.sql)
-    train_pdf = train_df.to_pandas(all_rows=True)
+    # ULTIMO   train_df = DataFrame.from_query(context.dataset_info.sql)
+    # ULTIMO   train_pdf = train_df.to_pandas(all_rows=True)
 
     # split data into X and y
-    X_train = train_pdf[feature_names]
-    y_train = train_pdf[target_name]
-
+    # ULTIMO   X_train = train_pdf[feature_names]
+    # ULTIMO   y_train = train_pdf[target_name]
+    print(os.environ["AOA_CONN_USERNAME"])
     print("Starting training...")
 
     # fit model to training data
@@ -46,7 +46,7 @@ def train(context: ModelContext, **kwargs):
     #model.fit(X_train, y_train)
 
     print("Finished training") 
-    print (context.dataset_info.username)
+    # OJO ESTE ES DE PRUEBA print (context.dataset_info.username)
 
     #print(context.dataset_info.predictions_database)
     
@@ -74,7 +74,7 @@ def train(context: ModelContext, **kwargs):
     save_plot("feature_importance.png", context=context)
 
     #feature_importance = model["xgb"].get_booster().get_score(importance_type="weight")
-    feature_importance = train_df
+    
     print("Inicia Nuevo")
     
     #model_pdf = model.result.to_pandas()[['Id','Score']]
