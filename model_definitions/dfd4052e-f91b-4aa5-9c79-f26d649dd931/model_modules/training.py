@@ -35,6 +35,8 @@ def train(context: ModelContext, **kwargs):
     # split data into X and y
     # ULTIMO   X_train = train_pdf[feature_names]
     # ULTIMO   y_train = train_pdf[target_name]
+    
+    
     print(os.environ["AOA_CONN_USERNAME"])
     print("Starting training...")
     
