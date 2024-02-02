@@ -39,7 +39,7 @@ def train(context: ModelContext, **kwargs):
     print("Starting training...")
     
     #qry1 = "SET SESSION SEARCHUIFDBPATH = " +  os.environ["AOA_CONN_USERNAME"] + ";"
-    print (qry1)
+    #print (qry1)
     
     #execute_sql(qry1)
     

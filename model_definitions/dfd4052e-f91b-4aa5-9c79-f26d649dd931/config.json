@@ -1,6 +1,5 @@
 {
 	"hyperParameters": {
-		"eta": 0.2,
-		"max_depth": 6
+		"model": model_gbc_alt_valor.pickle
 	}
 }
