@@ -59,7 +59,7 @@ def train(context: ModelContext, **kwargs):
 
     #print(context.dataset_info.predictions_database)
     
-    print("Inicia Install ..")
+    print("Inicia Install ....")
     
     #install_file(file_identifier='VIVO_AltoValorSTO', file_path=f"./VIVO_AltoValorSTO.py", 
     #         is_binary=False)
