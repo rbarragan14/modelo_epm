@@ -56,7 +56,7 @@ def score(context: ModelContext, **kwargs):
     execute_sql("database pocanalytics;")
     
     
-    print("Inicia Consulta 2")
+    print("Inicia Consulta 3")
     
     df = DataFrame.from_query("SELECT ROW_NUMBER() OVER (ORDER BY NR_TLFN,ID_LNHA,NR_CPF,NR_CPF_NUM,DS_CRCT_PLNO ) AS Id, "
                           "a.* FROM vivoaltovalor a")
